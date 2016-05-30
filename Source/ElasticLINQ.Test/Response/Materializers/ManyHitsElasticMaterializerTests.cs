@@ -3,6 +3,7 @@
 using System;
 using ElasticLinq.Response.Materializers;
 using System.Collections.Generic;
+using System.Linq;
 using ElasticLinq.Response.Model;
 using Xunit;
 
@@ -13,10 +14,11 @@ namespace ElasticLinq.Test.Response.Materializers
         [Fact]
         public void ManyOfTMaterializesObjects()
         {
-            var hits = MaterializerTestHelper.CreateSampleHits(3);
-            var materialized = ListHitsElasticMaterializer.Many<SampleClass>(hits, MaterializerTestHelper.ItemCreator);
+            var hitCount = 3;
+            var hits = MaterializerTestHelper.CreateSampleHits(hitCount);
+            var materialized = ListHitsElasticMaterializer.Many<SampleClass>(hits, MaterializerTestHelper.ItemCreator).ToList();
 
-            Assert.Equal(hits.Count, materialized.Count);
+            Assert.Equal(hitCount, materialized.Count);
             var index = 0;
             foreach (var hit in hits)
                 Assert.Equal(hit.fields["someField"], materialized[index++].SampleField);
@@ -25,15 +27,16 @@ namespace ElasticLinq.Test.Response.Materializers
         [Fact]
         public void ManyMaterializesObjects()
         {
-            var response = MaterializerTestHelper.CreateSampleResponse(10);
+            var hitCount = 10;
+            var response = MaterializerTestHelper.CreateSampleResponse(hitCount);
             var expected = response.hits.hits;
 
             var materializer = new ListHitsElasticMaterializer(MaterializerTestHelper.ItemCreator, typeof(SampleClass));
             var actual = materializer.Materialize(response);
 
-            var actualList = Assert.IsType<List<SampleClass>>(actual);
+            var actualList = Assert.IsAssignableFrom<IEnumerable<SampleClass>>(actual).ToList();
 
-            Assert.Equal(expected.Count, actualList.Count);
+            Assert.Equal(hitCount, actualList.Count);
             var index = 0;
             foreach (var hit in expected)
                 Assert.Equal(hit.fields["someField"], actualList[index++].SampleField);

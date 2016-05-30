@@ -48,9 +48,14 @@ namespace ElasticLinq.Response.Materializers
                 .Invoke(null, new object[] { hits.hits, projector });
         }
 
-        internal static List<T> Many<T>(IEnumerable<Hit> hits, Func<Hit, object> projector)
+        internal static IEnumerable<T> Many<T>(List<Hit> hits, Func<Hit, object> projector)
         {
-            return hits.Select(projector).Cast<T>().ToList();
+            while (hits.Count > 0)
+            {
+                var result = (T)projector(hits[0]);
+                hits.RemoveAt(0);
+                yield return result;
+            }
         }
     }
 }

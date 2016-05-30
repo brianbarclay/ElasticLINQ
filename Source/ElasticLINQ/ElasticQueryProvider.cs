@@ -126,7 +126,11 @@ namespace ElasticLinq
                         throw new InvalidOperationException("No HTTP response received.");
                 }
 
-                return translation.Materializer.Materialize(response);
+                var result = translation.Materializer.Materialize(response);
+                // Relieve some memory pressure by clearing as soon as possible
+                if (response.hits != null && response.hits.hits != null)
+                    response.hits.hits.Clear();
+                return result;
             }
             catch (AggregateException ex)
             {
